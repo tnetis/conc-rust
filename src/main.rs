@@ -958,11 +958,31 @@ fn random_name(len: usize) -> String {
     out
 }
 
+fn load_icon() -> egui::IconData {
+    let bytes = include_bytes!("../assets/icon.png");
+    if let Ok(img) = image::load_from_memory(bytes) {
+        let img = img.to_rgba8();
+        let (w, h) = img.dimensions();
+        egui::IconData {
+            rgba: img.into_raw(),
+            width: w,
+            height: h,
+        }
+    } else {
+        egui::IconData {
+            rgba: vec![0, 0, 0, 0],
+            width: 1,
+            height: 1,
+        }
+    }
+}
+
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([440.0, 550.0])
-            .with_min_inner_size([400.0, 500.0]),
+            .with_min_inner_size([400.0, 500.0])
+            .with_icon(load_icon()),
         ..Default::default()
     };
     eframe::run_native(

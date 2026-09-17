@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Conc
+GenericName=Editor de vídeo/audio
+Comment=Combinar, comprimir, cortar, multi-cortar y renombrar vídeos con FFmpeg
+Exec=conc
+Icon=conc
+Terminal=false
+Categories=AudioVideo;Video;Utility;
+Keywords=video;audio;ffmpeg;compress;cut;rename;

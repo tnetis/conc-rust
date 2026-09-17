@@ -75,3 +75,18 @@ src/
 - La app invoca `ffmpeg`/`ffprobe` como subprocesos externos (igual que la versión Python).
 - Los ajustes se guardan en el directorio de configuración del usuario (`settings.json`).
 - En Windows el proceso de FFmpeg se lanza sin ventana de consola (`CREATE_NO_WINDOW`).
+
+
+## Icono
+
+- **Ventana (Linux y Windows):** se aplica en runtime al abrir la app (`assets/icon.png`, cargado con la crate `image`).
+- **Ejecutable de Windows (.exe):** el icono se embebe en el binario con `build.rs` + `assets/icon.ico` (se ve en el Explorador, accesos directos y barra de tareas).
+- **Menu de aplicaciones de Linux:** los binarios de Linux no llevan icono embebido. Para que aparezca en el menu, instala el `.desktop` y el PNG:
+
+```bash
+# para tu usuario (sin sudo)
+install -Dm755 target/release/conc ~/.local/bin/conc
+install -Dm644 assets/icon.png ~/.local/share/icons/hicolor/256x256/apps/conc.png
+install -Dm644 assets/conc.desktop ~/.local/share/applications/conc.desktop
+update-desktop-database ~/.local/share/applications 2>/dev/null || true
+```
