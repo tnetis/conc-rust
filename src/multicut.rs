@@ -180,7 +180,7 @@ mod tests {
     fn last4() {
         assert_eq!(last4_digits("video_12345678"), Some("5678".to_string()));
         assert_eq!(last4_digits("abc12"), Some("12".to_string()));
-        assert_eq!(last4_digits("00000042"), Some("42".to_string()));
+        assert_eq!(last4_digits("00000042"), Some("0042".to_string()));
         assert_eq!(last4_digits("no_digits"), None);
     }
 

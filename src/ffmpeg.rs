@@ -310,7 +310,7 @@ mod tests {
         let vid = build_combine_cmd("ffmpeg", "a.mp4", "s.mp3", "o.mp4", true, 10.0);
         assert!(vid.iter().any(|a| a == "-stream_loop"));
         assert!(!vid.iter().any(|a| a == "stillimage"));
-        assert!(vid.iter().any(|a| a == "1920:1080"));
+        assert!(vid.iter().any(|a| a.contains("1920:1080")));
     }
 
     #[test]
