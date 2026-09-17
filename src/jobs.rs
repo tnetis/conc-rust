@@ -354,7 +354,7 @@ pub fn multicut(
         return;
     }
 
-    let mut videos: Vec<String> = match std::fs::read_dir(folder) {
+    let videos: Vec<String> = match std::fs::read_dir(folder) {
         Ok(rd) => rd
             .filter_map(|e| e.ok())
             .map(|e| e.file_name().to_string_lossy().to_string())

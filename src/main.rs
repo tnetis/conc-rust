@@ -179,24 +179,24 @@ impl App {
         visuals.override_text_color = Some(egui::Color32::from_gray(232));
         visuals.hyperlink_color = accent;
         visuals.selection.bg_fill = accent;
-        visuals.selection.stroke = egui::Stroke::new(1.0, accent);
+        visuals.selection.stroke = egui::Stroke::new(1.0_f32, accent);
 
         // Widgets redondeados y con estados bien diferenciados
-        let round = egui::CornerRadius::same(8);
+        let round = egui::Rounding::same(8);
         visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(30, 31, 38);
         visuals.widgets.noninteractive.bg_stroke =
-            egui::Stroke::new(1.0, egui::Color32::from_rgb(52, 54, 62));
-        visuals.widgets.noninteractive.corner_radius = round;
+            egui::Stroke::new(1.0_f32, egui::Color32::from_rgb(52, 54, 62));
+        visuals.widgets.noninteractive.rounding = round;
         visuals.widgets.inactive.bg_fill = egui::Color32::from_rgb(38, 40, 48);
-        visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, egui::Color32::from_gray(235));
-        visuals.widgets.inactive.corner_radius = round;
+        visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0_f32, egui::Color32::from_gray(235));
+        visuals.widgets.inactive.rounding = round;
         visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(58, 60, 70);
-        visuals.widgets.hovered.corner_radius = round;
+        visuals.widgets.hovered.rounding = round;
         visuals.widgets.active.bg_fill = accent;
-        visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0, egui::Color32::BLACK);
-        visuals.widgets.active.corner_radius = round;
+        visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0_f32, egui::Color32::BLACK);
+        visuals.widgets.active.rounding = round;
         visuals.widgets.open.bg_fill = egui::Color32::from_rgb(48, 50, 60);
-        visuals.widgets.open.corner_radius = round;
+        visuals.widgets.open.rounding = round;
 
         style.visuals = visuals;
         ctx.set_style(style);
@@ -794,7 +794,7 @@ impl eframe::App for App {
         self.toast_expire();
 
         egui::TopBottomPanel::top("tabs")
-            .frame(egui::Frame::none().inner_margin(egui::Margin::symmetric(14, 8)))
+            .frame(egui::Frame::none().inner_margin(egui::Margin::symmetric(14.0, 8.0)))
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.selectable_value(&mut self.tab, Tab::Combine, "Combine");
@@ -811,7 +811,7 @@ impl eframe::App for App {
             });
 
         egui::CentralPanel::default()
-            .frame(egui::Frame::none().inner_margin(egui::Margin::same(18)))
+            .frame(egui::Frame::none().inner_margin(egui::Margin::same(18.0)))
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     self.ui_tab(ui);
@@ -822,7 +822,7 @@ impl eframe::App for App {
             .frame(
                 egui::Frame::none()
                     .fill(egui::Color32::from_rgb(20, 21, 26))
-                    .inner_margin(egui::Margin::symmetric(16, 8)),
+                    .inner_margin(egui::Margin::symmetric(16.0, 8.0)),
             )
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
