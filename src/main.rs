@@ -739,6 +739,7 @@ impl App {
         let mut save = false;
         let mut clear = false;
         let mut cancel = false;
+        let red = self.red();
 
         egui::Window::new("Ajustes")
             .open(&mut open)
@@ -780,7 +781,7 @@ impl App {
                     });
                 ui.add_space(8.0);
                 if ui
-                    .button(egui::RichText::new("Borrar configuración guardada").color(self.red()))
+                    .button(egui::RichText::new("Borrar configuración guardada").color(red))
                     .clicked()
                 {
                     clear = true;
