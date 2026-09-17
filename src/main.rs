@@ -727,7 +727,7 @@ impl App {
 
     fn open_settings(&mut self) {
         self.s_ffmpeg_path = self.settings.ffmpeg_path.clone();
-        self.s_crf = self.settings.crf as i32;
+        self.s_crf = self.settings.crf;
         self.s_preset = self.settings.preset.clone();
         self.s_gen_report = self.settings.gen_report;
         self.s_accent = self.settings.accent.clone();
@@ -808,7 +808,7 @@ impl App {
             if self.settings.ffmpeg_path.is_empty() {
                 self.settings.ffmpeg_path = "ffmpeg".to_string();
             }
-            self.settings.crf = self.s_crf.clamp(18, 30) as u32;
+            self.settings.crf = self.s_crf.clamp(18, 30);
             self.settings.preset = self.s_preset.clone();
             self.settings.gen_report = self.s_gen_report;
             self.settings.accent = self.s_accent.clone();
