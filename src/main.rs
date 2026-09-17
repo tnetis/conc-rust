@@ -46,6 +46,13 @@ struct App {
     rename_length: String,
     find_text: String,
     replace_text: String,
+
+    // Estado de edición de Ajustes (persistente entre frames)
+    s_ffmpeg_path: String,
+    s_crf: i32,
+    s_preset: String,
+    s_gen_report: bool,
+    s_accent: String,
 }
 
 impl Default for App {
@@ -75,6 +82,11 @@ impl Default for App {
             rename_length: "8".to_string(),
             find_text: String::new(),
             replace_text: String::new(),
+            s_ffmpeg_path: "ffmpeg".to_string(),
+            s_crf: 25,
+            s_preset: "medium".to_string(),
+            s_gen_report: true,
+            s_accent: "amber400".to_string(),
         }
     }
 }
@@ -713,11 +725,20 @@ impl App {
         }
     }
 
+    fn open_settings(&mut self) {
+        self.s_ffmpeg_path = self.settings.ffmpeg_path.clone();
+        self.s_crf = self.settings.crf as i32;
+        self.s_preset = self.settings.preset.clone();
+        self.s_gen_report = self.settings.gen_report;
+        self.s_accent = self.settings.accent.clone();
+        self.show_settings = true;
+    }
+
     fn settings_window(&mut self, ctx: &egui::Context) {
         let mut open = self.show_settings;
-        let mut new_settings = self.settings.clone();
-        let mut changed = false;
-        let mut should_close = false;
+        let mut save = false;
+        let mut clear = false;
+        let mut cancel = false;
 
         egui::Window::new("Ajustes")
             .open(&mut open)
@@ -727,10 +748,10 @@ impl App {
             .show(ctx, |ui| {
                 ui.label(egui::RichText::new("Ruta FFmpeg").strong());
                 ui.horizontal(|ui| {
-                    ui.add(egui::TextEdit::singleline(&mut new_settings.ffmpeg_path).desired_width(210.0));
+                    ui.add(egui::TextEdit::singleline(&mut self.s_ffmpeg_path).desired_width(210.0));
                     if ui.button("Seleccionar").clicked() {
                         if let Some(p) = rfd::FileDialog::new().pick_file() {
-                            new_settings.ffmpeg_path = p.to_string_lossy().to_string();
+                            self.s_ffmpeg_path = p.to_string_lossy().to_string();
                         }
                     }
                 });
@@ -738,23 +759,23 @@ impl App {
                 ui.label(egui::RichText::new("Compresión").strong());
                 ui.horizontal(|ui| {
                     ui.label("CRF (Calidad):");
-                    ui.add(egui::Slider::new(&mut new_settings.crf, 18..=30).show_value(true));
+                    ui.add(egui::Slider::new(&mut self.s_crf, 18..=30).show_value(true));
                 });
                 egui::ComboBox::from_label("Preset")
-                    .selected_text(new_settings.preset.clone())
+                    .selected_text(self.s_preset.clone())
                     .show_ui(ui, |ui| {
                         for p in settings::PRESETS {
-                            ui.selectable_value(&mut new_settings.preset, (*p).to_string(), *p);
+                            ui.selectable_value(&mut self.s_preset, (*p).to_string(), *p);
                         }
                     });
-                ui.checkbox(&mut new_settings.gen_report, "Generar reporte de compresión");
+                ui.checkbox(&mut self.s_gen_report, "Generar reporte de compresión");
                 ui.add_space(8.0);
                 ui.label(egui::RichText::new("Apariencia").strong());
                 egui::ComboBox::from_label("Color de acento")
-                    .selected_text(settings::accent_label(&new_settings.accent))
+                    .selected_text(settings::accent_label(&self.s_accent))
                     .show_ui(ui, |ui| {
                         for (k, label) in settings::ACCENTS {
-                            ui.selectable_value(&mut new_settings.accent, (*k).to_string(), *label);
+                            ui.selectable_value(&mut self.s_accent, (*k).to_string(), *label);
                         }
                     });
                 ui.add_space(8.0);
@@ -762,28 +783,43 @@ impl App {
                     .button(egui::RichText::new("Borrar configuración guardada").color(self.red()))
                     .clicked()
                 {
-                    new_settings = settings::Settings::default();
-                    changed = true;
+                    clear = true;
                 }
                 ui.horizontal(|ui| {
                     if ui.button("Guardar").clicked() {
-                        changed = true;
-                        should_close = true;
+                        save = true;
                     }
                     if ui.button("Cancelar").clicked() {
-                        should_close = true;
+                        cancel = true;
                     }
                 });
             });
 
-        if should_close {
+        if clear {
+            self.s_ffmpeg_path = "ffmpeg".to_string();
+            self.s_crf = 25;
+            self.s_preset = "medium".to_string();
+            self.s_gen_report = true;
+            self.s_accent = "amber400".to_string();
+            save = true;
+        }
+        if save {
+            self.settings.ffmpeg_path = self.s_ffmpeg_path.trim().to_string();
+            if self.settings.ffmpeg_path.is_empty() {
+                self.settings.ffmpeg_path = "ffmpeg".to_string();
+            }
+            self.settings.crf = self.s_crf.clamp(18, 30) as u32;
+            self.settings.preset = self.s_preset.clone();
+            self.settings.gen_report = self.s_gen_report;
+            self.settings.accent = self.s_accent.clone();
+            self.settings.sanitize();
+            settings::save(&self.settings);
+            open = false;
+        }
+        if cancel {
             open = false;
         }
         self.show_settings = open;
-        if changed {
-            self.settings = new_settings;
-            settings::save(&self.settings);
-        }
     }
 }
 
@@ -794,19 +830,40 @@ impl eframe::App for App {
         self.toast_expire();
 
         egui::TopBottomPanel::top("tabs")
-            .frame(egui::Frame::none().inner_margin(egui::Margin::symmetric(14.0, 8.0)))
+            .frame(egui::Frame::none().inner_margin(egui::Margin::symmetric(10.0, 6.0)))
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    ui.selectable_value(&mut self.tab, Tab::Combine, "Combine");
-                    ui.selectable_value(&mut self.tab, Tab::Compress, "Compress");
-                    ui.selectable_value(&mut self.tab, Tab::Cut, "Cut");
-                    ui.selectable_value(&mut self.tab, Tab::MultiCut, "Multi-Cut");
-                    ui.selectable_value(&mut self.tab, Tab::Rename, "Rename");
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("⚙").on_hover_text("Ajustes").clicked() {
-                            self.show_settings = true;
-                        }
-                    });
+                    ui.spacing_mut().button_padding = egui::vec2(8.0, 6.0);
+                    if ui
+                        .selectable_label(self.tab == Tab::Combine, egui::RichText::new("Combine").size(13.0))
+                        .clicked()
+                    {
+                        self.tab = Tab::Combine;
+                    }
+                    if ui
+                        .selectable_label(self.tab == Tab::Compress, egui::RichText::new("Compress").size(13.0))
+                        .clicked()
+                    {
+                        self.tab = Tab::Compress;
+                    }
+                    if ui
+                        .selectable_label(self.tab == Tab::Cut, egui::RichText::new("Cut").size(13.0))
+                        .clicked()
+                    {
+                        self.tab = Tab::Cut;
+                    }
+                    if ui
+                        .selectable_label(self.tab == Tab::MultiCut, egui::RichText::new("Multi-Cut").size(13.0))
+                        .clicked()
+                    {
+                        self.tab = Tab::MultiCut;
+                    }
+                    if ui
+                        .selectable_label(self.tab == Tab::Rename, egui::RichText::new("Rename").size(13.0))
+                        .clicked()
+                    {
+                        self.tab = Tab::Rename;
+                    }
                 });
             });
 
@@ -838,6 +895,11 @@ impl eframe::App for App {
                         let txt = self.status.clone();
                         ui.label(egui::RichText::new(txt).color(self.gray()));
                     }
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("⚙").on_hover_text("Ajustes").clicked() {
+                            self.open_settings();
+                        }
+                    });
                 });
             });
 
