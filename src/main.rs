@@ -182,7 +182,7 @@ impl App {
         visuals.selection.stroke = egui::Stroke::new(1.0_f32, accent);
 
         // Widgets redondeados y con estados bien diferenciados
-        let round = egui::Rounding::same(8);
+        let round = egui::Rounding::same(8.0);
         visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(30, 31, 38);
         visuals.widgets.noninteractive.bg_stroke =
             egui::Stroke::new(1.0_f32, egui::Color32::from_rgb(52, 54, 62));
