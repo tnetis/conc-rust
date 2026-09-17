@@ -148,11 +148,58 @@ impl App {
 
     fn apply_theme(&self, ctx: &egui::Context) {
         let accent = self.accent();
+        let mut style = (*ctx.style()).clone();
+
+        // Tipografía más grande y legible
+        style.text_styles.insert(
+            egui::TextStyle::Heading,
+            egui::FontId::proportional(22.0),
+        );
+        style.text_styles.insert(egui::TextStyle::Body, egui::FontId::proportional(16.0));
+        style.text_styles.insert(egui::TextStyle::Button, egui::FontId::proportional(15.0));
+        style.text_styles.insert(egui::TextStyle::Small, egui::FontId::proportional(12.0));
+        style.text_styles.insert(
+            egui::TextStyle::Monospace,
+            egui::FontId::monospace(14.0),
+        );
+
+        // Espaciado más aireado
+        style.spacing.item_spacing = egui::vec2(10.0, 12.0);
+        style.spacing.button_padding = egui::vec2(16.0, 10.0);
+        style.spacing.interact_size.y = 34.0;
+        style.spacing.slider_width = 170.0;
+        style.spacing.text_edit_width = 230.0;
+
+        // Paleta oscura con mejor contraste
         let mut visuals = egui::Visuals::dark();
+        visuals.panel_fill = egui::Color32::from_rgb(15, 16, 20);
+        visuals.window_fill = egui::Color32::from_rgb(24, 25, 31);
+        visuals.faint_bg_color = egui::Color32::from_rgb(20, 21, 26);
+        visuals.extreme_bg_color = egui::Color32::from_rgb(12, 13, 16);
+        visuals.override_text_color = Some(egui::Color32::from_gray(232));
+        visuals.hyperlink_color = accent;
         visuals.selection.bg_fill = accent;
         visuals.selection.stroke = egui::Stroke::new(1.0, accent);
-        visuals.hyperlink_color = accent;
-        ctx.set_visuals(visuals);
+
+        // Widgets redondeados y con estados bien diferenciados
+        let round = egui::CornerRadius::same(8);
+        visuals.widgets.noninteractive.bg_fill = egui::Color32::from_rgb(30, 31, 38);
+        visuals.widgets.noninteractive.bg_stroke =
+            egui::Stroke::new(1.0, egui::Color32::from_rgb(52, 54, 62));
+        visuals.widgets.noninteractive.corner_radius = round;
+        visuals.widgets.inactive.bg_fill = egui::Color32::from_rgb(38, 40, 48);
+        visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, egui::Color32::from_gray(235));
+        visuals.widgets.inactive.corner_radius = round;
+        visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(58, 60, 70);
+        visuals.widgets.hovered.corner_radius = round;
+        visuals.widgets.active.bg_fill = accent;
+        visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0, egui::Color32::BLACK);
+        visuals.widgets.active.corner_radius = round;
+        visuals.widgets.open.bg_fill = egui::Color32::from_rgb(48, 50, 60);
+        visuals.widgets.open.corner_radius = round;
+
+        style.visuals = visuals;
+        ctx.set_style(style);
     }
 
     fn toast_expire(&mut self) {
@@ -746,45 +793,53 @@ impl eframe::App for App {
         self.apply_theme(ctx);
         self.toast_expire();
 
-        egui::TopBottomPanel::top("tabs").show(ctx, |ui| {
-            ui.add_space(4.0);
-            ui.horizontal(|ui| {
-                ui.selectable_value(&mut self.tab, Tab::Combine, "Combine");
-                ui.selectable_value(&mut self.tab, Tab::Compress, "Compress");
-                ui.selectable_value(&mut self.tab, Tab::Cut, "Cut");
-                ui.selectable_value(&mut self.tab, Tab::MultiCut, "Multi-Cut");
-                ui.selectable_value(&mut self.tab, Tab::Rename, "Rename");
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button("⚙").on_hover_text("Ajustes").clicked() {
-                        self.show_settings = true;
+        egui::TopBottomPanel::top("tabs")
+            .frame(egui::Frame::none().inner_margin(egui::Margin::symmetric(14, 8)))
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.selectable_value(&mut self.tab, Tab::Combine, "Combine");
+                    ui.selectable_value(&mut self.tab, Tab::Compress, "Compress");
+                    ui.selectable_value(&mut self.tab, Tab::Cut, "Cut");
+                    ui.selectable_value(&mut self.tab, Tab::MultiCut, "Multi-Cut");
+                    ui.selectable_value(&mut self.tab, Tab::Rename, "Rename");
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("⚙").on_hover_text("Ajustes").clicked() {
+                            self.show_settings = true;
+                        }
+                    });
+                });
+            });
+
+        egui::CentralPanel::default()
+            .frame(egui::Frame::none().inner_margin(egui::Margin::same(18)))
+            .show(ctx, |ui| {
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    self.ui_tab(ui);
+                });
+            });
+
+        egui::TopBottomPanel::bottom("status")
+            .frame(
+                egui::Frame::none()
+                    .fill(egui::Color32::from_rgb(20, 21, 26))
+                    .inner_margin(egui::Margin::symmetric(16, 8)),
+            )
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    if self.busy {
+                        ui.add(egui::Spinner::new().size(14.0));
+                        ui.add_space(6.0);
+                    }
+                    if let Some(p) = self.progress {
+                        ui.add(egui::ProgressBar::new(p).desired_width(110.0));
+                        ui.add_space(6.0);
+                    }
+                    if !self.status.is_empty() {
+                        let txt = self.status.clone();
+                        ui.label(egui::RichText::new(txt).color(self.gray()));
                     }
                 });
             });
-            ui.add_space(4.0);
-        });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                self.ui_tab(ui);
-            });
-        });
-
-        egui::TopBottomPanel::bottom("status").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                if self.busy {
-                    ui.add(egui::Spinner::new().size(14.0));
-                    ui.add_space(4.0);
-                }
-                if let Some(p) = self.progress {
-                    ui.add(egui::ProgressBar::new(p).desired_width(100.0));
-                    ui.add_space(4.0);
-                }
-                if !self.status.is_empty() {
-                    let txt = self.status.clone();
-                    ui.label(egui::RichText::new(txt).color(self.gray()));
-                }
-            });
-        });
 
         if self.show_settings {
             self.settings_window(ctx);
