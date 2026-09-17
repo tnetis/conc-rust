@@ -31,6 +31,7 @@ struct App {
     toast_at: Option<std::time::Instant>,
     error: Option<String>,
     show_settings: bool,
+    first_frame: bool,
 
     visual_path: Option<PathBuf>,
     is_visual_video: bool,
@@ -69,6 +70,7 @@ impl Default for App {
             toast_at: None,
             error: None,
             show_settings: false,
+            first_frame: true,
             visual_path: None,
             is_visual_video: false,
             audio_path: None,
@@ -725,6 +727,25 @@ impl App {
         }
     }
 
+    fn center_window_once(&mut self, ctx: &egui::Context) {
+        if !self.first_frame {
+            return;
+        }
+        let (monitor, outer) = ctx.input(|i| {
+            let vp = i.viewport();
+            (vp.monitor_size, vp.outer_rect)
+        });
+        if let (Some(monitor), Some(outer)) = (monitor, outer) {
+            let size = outer.size();
+            let pos = egui::pos2(
+                ((monitor.x - size.x) / 2.0).max(0.0),
+                ((monitor.y - size.y) / 2.0).max(0.0),
+            );
+            ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(pos));
+            self.first_frame = false;
+        }
+    }
+
     fn open_settings(&mut self) {
         self.s_ffmpeg_path = self.settings.ffmpeg_path.clone();
         self.s_crf = self.settings.crf;
@@ -826,6 +847,7 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.center_window_once(ctx);
         self.drain_events(ctx);
         self.apply_theme(ctx);
         self.toast_expire();
