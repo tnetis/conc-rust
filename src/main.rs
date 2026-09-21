@@ -59,9 +59,23 @@ struct App {
 impl Default for App {
     fn default() -> Self {
         let settings = settings::load();
+        let tab = match settings.last_tab {
+            1 => Tab::Compress,
+            2 => Tab::Cut,
+            3 => Tab::MultiCut,
+            4 => Tab::Rename,
+            _ => Tab::Combine,
+        };
+        let visual_path = existing_path(&settings.last_visual);
+        let is_visual_video = visual_path.as_deref().map(ffmpeg::is_video_ext).unwrap_or(false);
+        let audio_path = existing_path(&settings.last_audio);
+        let videos_folder = existing_path(&settings.last_videos_folder);
+        let video_for_cut = existing_path(&settings.last_video_for_cut);
+        let multi_cut_folder = existing_path(&settings.last_multi_cut_folder);
+        let rename_folder = existing_path(&settings.last_rename_folder);
         Self {
             settings,
-            tab: Tab::Combine,
+            tab,
             busy: false,
             rx: None,
             status: String::new(),
@@ -71,13 +85,13 @@ impl Default for App {
             error: None,
             show_settings: false,
             first_frame: true,
-            visual_path: None,
-            is_visual_video: false,
-            audio_path: None,
-            videos_folder: None,
-            video_for_cut: None,
-            multi_cut_folder: None,
-            rename_folder: None,
+            visual_path,
+            is_visual_video,
+            audio_path,
+            videos_folder,
+            video_for_cut,
+            multi_cut_folder,
+            rename_folder,
             start_time: String::new(),
             end_time: String::new(),
             multi_cut_input: String::new(),
@@ -746,6 +760,39 @@ impl App {
         }
     }
 
+    fn persist_selections(&mut self) {
+        let tab = match self.tab {
+            Tab::Combine => 0u32,
+            Tab::Compress => 1,
+            Tab::Cut => 2,
+            Tab::MultiCut => 3,
+            Tab::Rename => 4,
+        };
+        let visual = path_str(&self.visual_path);
+        let audio = path_str(&self.audio_path);
+        let vcut = path_str(&self.video_for_cut);
+        let vids = path_str(&self.videos_folder);
+        let mcut = path_str(&self.multi_cut_folder);
+        let ren = path_str(&self.rename_folder);
+        if self.settings.last_tab != tab
+            || self.settings.last_visual != visual
+            || self.settings.last_audio != audio
+            || self.settings.last_video_for_cut != vcut
+            || self.settings.last_videos_folder != vids
+            || self.settings.last_multi_cut_folder != mcut
+            || self.settings.last_rename_folder != ren
+        {
+            self.settings.last_tab = tab;
+            self.settings.last_visual = visual;
+            self.settings.last_audio = audio;
+            self.settings.last_video_for_cut = vcut;
+            self.settings.last_videos_folder = vids;
+            self.settings.last_multi_cut_folder = mcut;
+            self.settings.last_rename_folder = ren;
+            settings::save(&self.settings);
+        }
+    }
+
     fn open_settings(&mut self) {
         self.s_ffmpeg_path = self.settings.ffmpeg_path.clone();
         self.s_crf = self.settings.crf;
@@ -948,6 +995,8 @@ impl eframe::App for App {
             }
         }
 
+        self.persist_selections();
+
         if let Some((msg, is_err)) = self.toast.clone() {
             let color = if is_err { self.red() } else { self.accent() };
             egui::Window::new("toast")
@@ -980,6 +1029,33 @@ fn random_name(len: usize) -> String {
     out
 }
 
+fn path_str(p: &Option<PathBuf>) -> String {
+    p.as_ref().map(|x| x.to_string_lossy().to_string()).unwrap_or_default()
+}
+
+fn existing_path(s: &str) -> Option<PathBuf> {
+    if s.is_empty() {
+        None
+    } else {
+        let p = PathBuf::from(s);
+        if p.exists() { Some(p) } else { None }
+    }
+}
+
+fn setup_fonts(ctx: &egui::Context) {
+    let mut fonts = egui::FontDefinitions::default();
+    fonts.font_data.insert(
+        "plex".to_owned(),
+        egui::FontData::from_static(include_bytes!("../assets/fonts/IBMPlexSans-Regular.ttf")).into(),
+    );
+    fonts
+        .families
+        .entry(egui::FontFamily::Proportional)
+        .or_default()
+        .insert(0, "plex".to_owned());
+    ctx.set_fonts(fonts);
+}
+
 fn load_icon() -> egui::IconData {
     let bytes = include_bytes!("../assets/icon.png");
     if let Ok(img) = image::load_from_memory(bytes) {
@@ -1010,6 +1086,9 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "Conc",
         options,
-        Box::new(|_cc| Ok(Box::new(App::default()))),
+        Box::new(|cc| {
+            setup_fonts(&cc.egui_ctx);
+            Ok(Box::new(App::default()))
+        }),
     )
 }
