@@ -204,7 +204,7 @@ impl App {
         visuals.window_fill = egui::Color32::from_rgb(24, 25, 31);
         visuals.faint_bg_color = egui::Color32::from_rgb(20, 21, 26);
         visuals.extreme_bg_color = egui::Color32::from_rgb(12, 13, 16);
-        visuals.override_text_color = Some(egui::Color32::from_gray(232));
+        visuals.override_text_color = Some(egui::Color32::from_gray(245));
         visuals.hyperlink_color = accent;
         visuals.selection.bg_fill = accent;
         visuals.selection.stroke = egui::Stroke::new(1.0_f32, accent);
@@ -215,16 +215,19 @@ impl App {
         visuals.widgets.noninteractive.bg_stroke =
             egui::Stroke::new(1.0_f32, egui::Color32::from_rgb(52, 54, 62));
         visuals.widgets.noninteractive.rounding = round;
+        visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0_f32, egui::Color32::from_gray(218));
         visuals.widgets.inactive.bg_fill = egui::Color32::from_rgb(38, 40, 48);
         visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0_f32, egui::Color32::from_gray(235));
         visuals.widgets.inactive.rounding = round;
         visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(58, 60, 70);
         visuals.widgets.hovered.rounding = round;
-        visuals.widgets.active.bg_fill = accent;
-        visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0_f32, egui::Color32::BLACK);
+        visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.0_f32, egui::Color32::WHITE);
+        visuals.widgets.active.bg_fill = egui::Color32::from_rgb(72, 74, 86);
+        visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0_f32, egui::Color32::WHITE);
         visuals.widgets.active.rounding = round;
         visuals.widgets.open.bg_fill = egui::Color32::from_rgb(48, 50, 60);
         visuals.widgets.open.rounding = round;
+        visuals.widgets.open.fg_stroke = egui::Stroke::new(1.0_f32, egui::Color32::WHITE);
 
         style.visuals = visuals;
         ctx.set_style(style);
