@@ -203,7 +203,7 @@ impl App {
         visuals.panel_fill = egui::Color32::from_rgb(15, 16, 20);
         visuals.window_fill = egui::Color32::from_rgb(24, 25, 31);
         visuals.faint_bg_color = egui::Color32::from_rgb(20, 21, 26);
-        visuals.extreme_bg_color = egui::Color32::from_rgb(12, 13, 16);
+        visuals.extreme_bg_color = egui::Color32::from_rgb(36, 38, 46);
         visuals.override_text_color = Some(egui::Color32::from_gray(245));
         visuals.hyperlink_color = accent;
         visuals.selection.bg_fill = accent;
@@ -684,15 +684,12 @@ impl App {
                 ui.colored_label(gray, Self::file_name_display(&self.multi_cut_folder, "No folder selected", "Folder: "));
                 ui.add_space(4.0);
                 ui.label("Instructions (ID START - END [ROT])");
-                ui.scope(|ui| {
-                    ui.visuals_mut().extreme_bg_color = egui::Color32::from_rgb(36, 38, 46);
-                    ui.add(
-                        egui::TextEdit::multiline(&mut self.multi_cut_input)
-                            .hint_text("4632 00:04 - 00:35\n2739 r90")
-                            .desired_rows(6)
-                            .desired_width(f32::INFINITY),
-                    );
-                });
+                ui.add(
+                    egui::TextEdit::multiline(&mut self.multi_cut_input)
+                        .hint_text("4632 00:04 - 00:35\n2739 r90")
+                        .desired_rows(6)
+                        .desired_width(f32::INFINITY),
+                );
                 ui.add_space(6.0);
                 let enabled = self.multi_cut_folder.is_some() && !self.busy;
                 if ui
