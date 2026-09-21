@@ -19,4 +19,8 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 winres = "0.1"
 
 [profile.release]
-opt-level = 2
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
