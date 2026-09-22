@@ -31,13 +31,6 @@ pub struct Settings {
     pub preset: String,
     pub gen_report: bool,
     pub accent: String,
-    pub last_tab: u32,
-    pub last_visual: String,
-    pub last_audio: String,
-    pub last_video_for_cut: String,
-    pub last_videos_folder: String,
-    pub last_multi_cut_folder: String,
-    pub last_rename_folder: String,
 }
 
 impl Default for Settings {
@@ -48,13 +41,6 @@ impl Default for Settings {
             preset: "medium".to_string(),
             gen_report: true,
             accent: "amber400".to_string(),
-            last_tab: 0,
-            last_visual: String::new(),
-            last_audio: String::new(),
-            last_video_for_cut: String::new(),
-            last_videos_folder: String::new(),
-            last_multi_cut_folder: String::new(),
-            last_rename_folder: String::new(),
         }
     }
 }
