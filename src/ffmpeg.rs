@@ -64,8 +64,19 @@ pub fn get_ffprobe_path(ffmpeg_path: &str) -> String {
     "ffprobe".to_string()
 }
 
+fn base_command(program: &str) -> Command {
+    #[allow(unused_mut)]
+    let mut c = Command::new(program);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        c.creation_flags(0x0800_0000);
+    }
+    c
+}
+
 pub fn ffmpeg_available(ffmpeg: &str) -> bool {
-    Command::new(ffmpeg)
+    base_command(ffmpeg)
         .arg("-version")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
@@ -218,7 +229,7 @@ pub fn get_duration(ffprobe: &str, path: &str) -> Option<f64> {
     if !Path::new(path).exists() {
         return None;
     }
-    let out = Command::new(ffprobe)
+    let out = base_command(ffprobe)
         .args(["-v", "quiet", "-print_format", "json", "-show_format", path])
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -246,22 +257,8 @@ pub fn parse_progress_time(line_lower: &str) -> Option<f64> {
     Some(h * 3600.0 + m * 60.0 + s)
 }
 
-#[cfg(windows)]
 pub fn spawn_ffmpeg(cmd: &[String]) -> std::io::Result<std::process::Child> {
-    use std::os::windows::process::CommandExt;
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-    Command::new(cmd.first().map(|s| s.as_str()).unwrap_or("ffmpeg"))
-        .args(&cmd[1..])
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped())
-        .creation_flags(CREATE_NO_WINDOW)
-        .spawn()
-}
-
-#[cfg(not(windows))]
-pub fn spawn_ffmpeg(cmd: &[String]) -> std::io::Result<std::process::Child> {
-    Command::new(cmd.first().map(|s| s.as_str()).unwrap_or("ffmpeg"))
+    base_command(cmd.first().map(|s| s.as_str()).unwrap_or("ffmpeg"))
         .args(&cmd[1..])
         .stdin(Stdio::null())
         .stdout(Stdio::null())
